@@ -1,92 +1,98 @@
-import re
-import streamlit as st 
+# 
 
-# This is page design
-st.set_page_config(page_title="Password Strength By ©Azeezullah Noohpoto ",
-                   page_icon="🔑",
-                   layout="centered")
 
-# Styling for CSS
 
-st.markdown("""
-<style>
-  .main{text-align:center;} /* Center align text*/
-            .stTextInput{:70% ! important:
-            margin:auto;} /*Center password input/*
-            .stButton{text-align:center;} /*Center button/*
-            .stButton button {width :60 %;
-    background-color:blue;blue;color:white;
-            font-size:20px;border-redius:6px;}
-            .stButton button:hover
-    {background-color:purplegreen;color:white}
-            
-</style>
-""", unsafe_allow_html=True
+
+import streamlit as st
+import random
+import string
+
+# Page configuration
+st.set_page_config(
+    page_title="Password Manager",
+    page_icon="🔒",
+    layout="centered"
 )
 
-# Page title and description
-st.title("🔐 Passward Strength Generation")
-st.write("Enter your password below to check its security level.🚀")
+# Custom CSS for styling
+st.markdown("""
+<style>
+    .main {text-align: center;}
+    .stTextInput {width: 60% !important; margin: auto;}
+    .stButton {display: flex; justify-content: center;}
+    .stButton button {width: 50%; background-color: #4CAF50; color: white; font-size: 18px; padding: 10px;}
+    .stButton button:hover {background-color: #45a049;}
+   
+</style>
+""", unsafe_allow_html=True)
 
-# Password input field
-password = st.text_input("Enter your password:", type="password")
+# Title and description
+st.title("🔒 Password Manager")
+st.write("Store your passwords securely, check their strength, and generate new passwords!")
 
-# Function to check password 
+# Sidebar for password history
+st.sidebar.title("📜 Password History")
+if 'password_history' not in st.session_state:
+    st.session_state.password_history = []
+
+# Function to check password strength
 def check_password_strength(password):
-        score = 0 # intial password strength score
-        feedback = [] # List to store feedback message 
-        # Ceck password length
+    has_numeric = any(char.isdigit() for char in password)  # Check for numeric characters
+    has_special = any(char in "!@#$%^&*()_+-=[]{}|;:,.<>?/" for char in password)  # Check for special characters
 
-        if len(password) >= 7:
-                score += 1 # Increase score if password is at least 7 characters
+    if has_numeric and has_special:
+        return "✅ **Strong Password** - Your password is secure (contains numbers and special characters)."
+    elif has_numeric:
+        return "⚠️ **Moderate Password** - Add special characters (e.g., @#$%) to make it stronger."
+    elif has_special:
+        return "⚠️ **Moderate Password** - Add numbers (0-9) to make it stronger."
+    else:
+        return "❌ **Weak Password** - Add numbers (0-9) and special characters (e.g., @#$%) to make it stronger."
+
+# Function to generate a random password
+def generate_password():
+    characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.choice(characters) for _ in range(12))  # Fixed length of 12
+    return password
+
+# User input for saving a password
+user_password = st.text_input("Enter a password to save:", type="password", help="Type your password here to save it.")
+
+# Buttons for checking strength and saving password
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Check Strength"):
+        if user_password:
+            strength_message = check_password_strength(user_password)
+            st.markdown(strength_message)
         else:
-                feedback.append("❌Password should be at least 7 characters long.")
-
-        # Check uppercase and lowercase letters.
-        if re.search(r"[A-Z]", password):
-                score += 1
+            st.warning("⚠️ Please enter a password first!")
+with col2:
+    if st.button("Save Password"):
+        if user_password:
+            st.session_state.password_history.append(user_password)
+            st.success("✅ Password saved successfully!")
         else:
-                feedback.append("❌Password should contain at least one uppercase letter.")
+            st.warning("⚠️ Please enter a password first!")
 
-        # Check lowercase letters.
-        if re.search(r"[a-z]", password):
-                score += 1
-        else:
-                feedback.append("❌Password should contain at least one lowercase letter.")
+# Display password history in the sidebar
+if st.session_state.password_history:
+    st.sidebar.write("Saved Passwords:")
+    for idx, pwd in enumerate(st.session_state.password_history[::-1], 1):
+        st.sidebar.code(f"{idx}. {pwd}", language="text")
+else:
+    st.sidebar.write("No passwords saved yet.")
 
-        # Check digits.
-        if re.search(r"[0-9]", password):
-                score += 1
-        else:
-                feedback.append("❌Password should contain at least one digit.")
-
-        # Check special characters.
-        if re.search(r"[!@#$%^&*()_+{}\[\]:;<>,.?~\\]", password):
-                score += 1
-        else:
-                feedback.append("❌Password should contain at least one special character.")
-
-        # Display password strength message
+# New Password Generator
+st.markdown("---")
+st.subheader("🔑 Generate a New Password")
+if st.button("Generate New Password"):
+    new_password = generate_password()
+    st.code(f"Generated Password: {new_password}", language="text")
+    st.session_state.password_history.append(new_password)
+    st.success("✅ New password generated and saved!")
 
 
-        if score ==3:
-                st.info("🚸 *Moderate Password* -Consider  improving security by adding more features")
-        elif score ==4 :
-                st.success("✅ *Strong password* - your passwordis secure")
-        else:
-                st.error("❌ * Weak Password* -Follow the suggestion below to strength it")
-        # Feedback Suggestion 
-
-        if feedback:
-                with st.expander("🏐 * Improve uor Password "):
-                        for item in feedback:
-                                st.write(item)
-  # Password Input Field 
-        password= st.text_input("Enter your password:",type="password",help="Ensure your Password is Strong 🔓")
-
-# Button to Check Password Strength
-        if st.button("Check Strength"):
-                if password:
-                        check_password_strength(password) # Call Function to check strength 
-
-        st.warning("⚠ Please Enter a Password first") #
+# Footer
+st.markdown("---")
+st.markdown('<div class="footer">Made with ❤️ by <b> ©Azeezullah Noohpoto </b></div>', unsafe_allow_html=True)
