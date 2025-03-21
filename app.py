@@ -1,7 +1,4 @@
-# 
-
-
-
+#  Password Checker 
 
 import streamlit as st
 import random
